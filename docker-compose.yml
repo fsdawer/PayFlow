@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: payflow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: payFlow
+      MYSQL_USER: user
+      MYSQL_PASSWORD: root1234!
+      MYSQL_ROOT_PASSWORD: root1234!
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: payflow-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql_data:
