@@ -36,6 +36,8 @@ public class PaymentCycleServiceImpl implements PaymentCycleService {
      *    - YEARLY: 매년 billingMonth월 billingDate일
      * 3. 향후 N개월치 PaymentCycle 엔티티 생성 및 저장
      */
+
+    // 구독에 대한 결제 주기를 자동 생성
     @Override
     @Transactional
     public void createPaymentCyclesForSubscription(Long subscriptionId, int monthsAhead) {

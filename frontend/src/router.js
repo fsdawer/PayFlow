@@ -36,6 +36,14 @@ const routes = [
     meta: {
       title: '내 구독 - PayFlow'
     }
+  },
+  {
+    path: '/payments',
+    name: 'Payments',
+    component: () => import('./views/PaymentDashboard.vue'),
+    meta: {
+      title: '결제 대시보드 - PayFlow'
+    }
   }
 ]
 
