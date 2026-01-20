@@ -47,6 +47,10 @@ public class JwtUtil {
     return getClaims(token).getSubject();
   }
 
+  public Long getUserId(String token) {
+    return getClaims(token).get("uid", Long.class);
+  }
+
   public Date getExpiration(String token) {
     return getClaims(token).getExpiration();
   }

@@ -1,5 +1,7 @@
 package com.payflow.domain.subscription.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.payflow.domain.subscription.entity.Subscription.CycleType;
 import com.payflow.domain.subscription.entity.Subscription.Status;
 import jakarta.validation.constraints.Min;
@@ -38,7 +40,10 @@ public class SubscriptionUpdateRequest {
     // 4. 상태 변경
     private Status status;                 // ACTIVE, PAUSED, CANCELED
     
-    // 5. 메모 수정
+    // 5. 기타 정보 수정
+    @JsonProperty("bankName")
+    @JsonAlias("bank_name")
+    private String bankName;               // 은행/카드사 변경
     private String memo;                   // 메모 업데이트
 
 

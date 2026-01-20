@@ -1,28 +1,9 @@
 <template>
   <div class="payment-dashboard">
-    <section class="page-hero">
+    <section class="dashboard-header animate-fade-in-up">
       <div class="container">
-        <div class="hero-content animate-fade-in-up">
-          <div>
-            <p class="hero-kicker">결제 대시보드</p>
-            <h1 class="hero-title">
-              다가오는 결제를<br />
-              <span class="text-gradient">한눈에 확인하세요</span>
-            </h1>
-            <p class="hero-subtitle">
-              앞으로 7일 내 결제 예정 내역과 월별 지출 통계를 제공합니다.
-            </p>
-          </div>
-          <div class="hero-metrics glass">
-            <div class="metric">
-              <p class="metric-label">총 결제 예정</p>
-              <p class="metric-value">₩{{ formatNumber(upcomingTotal) }}</p>
-              <p class="metric-meta">{{ upcomingCount }}건</p>
-            </div>
-          </div>
-        </div>
+        <h1 class="page-title">결제 관리</h1>
       </div>
-      <div class="hero-glow"></div>
     </section>
 
     <section class="dashboard-content">
@@ -37,6 +18,11 @@
           <div class="section-header">
             <div>
               <h2 class="section-title">다가오는 결제</h2>
+              <div class="upcoming-summary">
+                <span class="total-label">총 결제 예정</span>
+                <span class="total-value">₩{{ formatNumber(upcomingTotal) }}</span>
+                <span class="total-count">({{ upcomingCount }}건)</span>
+              </div>
               <p class="section-subtitle">앞으로 {{ selectedDays }}일 내 결제 예정 목록입니다</p>
             </div>
             <div class="filters">
@@ -71,15 +57,16 @@
                   <p class="payment-category">{{ payment.subscriptionCategory || '기타' }}</p>
                   <h3 class="payment-name">{{ payment.subscriptionName }}</h3>
                 </div>
-                <span :class="['status-badge', statusClass(payment.status)]">
-                  {{ statusLabel(payment.status) }}
-                </span>
               </div>
               <div class="payment-body">
                 <div class="payment-details">
                   <div class="detail-item">
                     <span class="detail-label">결제 예정일</span>
                     <span class="detail-value">{{ formatDate(payment.dueDate) }} (D-{{ daysUntil(payment.dueDate) }})</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">결제수단</span>
+                    <span class="detail-value text-accent">{{ payment.subscriptionBankName || '—' }}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">금액</span>
@@ -111,19 +98,11 @@
           </div>
 
           <div v-else>
-            <div class="stats-grid">
-              <div class="stat-card">
-                <p class="stat-label">총 결제 금액</p>
-                <p class="stat-value">₩{{ formatNumber(history.totalPaidAmount) }}</p>
-                <p class="stat-meta">{{ history.paidCount }}건 완료</p>
-              </div>
-              <div class="stat-card">
-                <p class="stat-label">미결제</p>
-                <p class="stat-value pending">{{ history.pendingCount }}건</p>
-              </div>
-              <div class="stat-card">
-                <p class="stat-label">연체</p>
-                <p class="stat-value overdue">{{ history.overdueCount }}건</p>
+            <div class="stats-grid single-stat">
+              <div class="stat-card highlight">
+                <p class="stat-label">이번 달 지출 총액</p>
+                <p class="stat-value">₩{{ formatNumber(history.totalMonthlySpending) }}</p>
+                <p class="stat-meta">등록된 모든 구독 서비스의 합계입니다.</p>
               </div>
             </div>
 
@@ -141,14 +120,14 @@
               <h3 class="breakdown-title">상세 내역</h3>
               <article v-for="payment in history.payments" :key="payment.cycleId" class="history-item glass">
                 <div class="history-info">
-                  <span class="history-service">{{ payment.subscriptionName }}</span>
+                  <span class="history-service">
+                    {{ payment.subscriptionName }}
+                    <small v-if="payment.subscriptionBankName" class="history-bank">({{ payment.subscriptionBankName }})</small>
+                  </span>
                   <span class="history-date">{{ formatDate(payment.dueDate) }}</span>
                 </div>
                 <div class="history-amount-status">
                   <span class="history-amount">₩{{ formatNumber(payment.paidAmount || payment.subscriptionAmount) }}</span>
-                  <span :class="['history-status', statusClass(payment.status)]">
-                    {{ statusLabel(payment.status) }}
-                  </span>
                 </div>
               </article>
             </div>
@@ -172,6 +151,7 @@ const upcomingPayments = ref([])
 const history = ref({
   payments: [],
   totalPaidAmount: 0,
+  totalMonthlySpending: 0,
   paidCount: 0,
   pendingCount: 0,
   overdueCount: 0,
@@ -219,7 +199,7 @@ const statusClass = (status) => {
 }
 
 const getAuthHeaders = () => {
-  const token = localStorage.getItem('accessToken')
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -263,6 +243,7 @@ const loadHistory = async () => {
     history.value = data || {
       payments: [],
       totalPaidAmount: 0,
+      totalMonthlySpending: 0,
       paidCount: 0,
       pendingCount: 0,
       overdueCount: 0,
@@ -304,40 +285,40 @@ onMounted(() => {
   padding-bottom: var(--spacing-4xl);
 }
 
-.page-hero {
-  position: relative;
-  padding: var(--spacing-4xl) 0 var(--spacing-3xl);
-  overflow: hidden;
-}
-
-.hero-content {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: var(--spacing-3xl);
-  align-items: center;
-}
-
-.hero-kicker {
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-muted);
-  margin-bottom: var(--spacing-md);
-}
-
-.hero-title {
-  font-size: var(--font-size-5xl);
-  margin-bottom: var(--spacing-lg);
-}
-
-.hero-subtitle {
-  font-size: var(--font-size-lg);
+.dashboard-header {
   margin-bottom: var(--spacing-xl);
 }
 
-.hero-metrics {
-  padding: var(--spacing-2xl);
+.page-title {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-extrabold);
+}
+
+.upcoming-summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  width: fit-content;
+}
+
+.total-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.total-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.total-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
 }
 
 .metric-label {
@@ -371,9 +352,11 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-xl);
   flex-wrap: wrap;
   gap: var(--spacing-lg);
+  background: transparent;
+  padding: var(--spacing-md) 0;
 }
 
 .section-title {
@@ -504,6 +487,35 @@ onMounted(() => {
   margin-bottom: var(--spacing-2xl);
 }
 
+.stats-grid.single-stat {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.stats-grid.single-stat .stat-card {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  padding: var(--spacing-2xl);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+}
+
+.stat-card.highlight .stat-label {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.stat-card.highlight .stat-value {
+  font-size: var(--font-size-3xl);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
 .stat-card {
   padding: var(--spacing-lg);
   border-radius: var(--radius-md);
@@ -631,6 +643,12 @@ onMounted(() => {
 .history-date {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
+}
+
+.history-bank {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-left: 4px;
 }
 
 .history-amount-status {

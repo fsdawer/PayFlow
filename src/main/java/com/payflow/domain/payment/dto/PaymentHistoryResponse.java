@@ -55,6 +55,11 @@ public class PaymentHistoryResponse {
     private int pendingCount;
 
     /**
+     * 월간 총 지출 예정 금액 (모든 상태 합계)
+     */
+    private Integer totalMonthlySpending;
+
+    /**
      * 카테고리별 지출 금액
      * 예: {"스트리밍": 50000, "클라우드": 30000}
      */
@@ -71,7 +76,14 @@ public class PaymentHistoryResponse {
         // PAID 상태 금액 합계
         int totalPaidAmount = payments.stream()
                 .filter(p -> p.getStatus() == com.payflow.domain.payment.entity.PaymentCycle.PaymentStatus.PAID)
-                .map(PaymentCycleResponse::getPaidAmount)
+                .map(p -> p.getPaidAmount() != null ? p.getPaidAmount() : p.getSubscriptionAmount())
+                .filter(amount -> amount != null)
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        // 모든 상태 금액 합계
+        int totalMonthlySpending = payments.stream()
+                .map(p -> p.getPaidAmount() != null ? p.getPaidAmount() : p.getSubscriptionAmount())
                 .filter(amount -> amount != null)
                 .mapToInt(Integer::intValue)
                 .sum();
@@ -92,11 +104,13 @@ public class PaymentHistoryResponse {
         // 카테고리별 지출 (PAID만)
         Map<String, Integer> categoryExpenses = payments.stream()
                 .filter(p -> p.getStatus() == com.payflow.domain.payment.entity.PaymentCycle.PaymentStatus.PAID)
-                .filter(p -> p.getSubscriptionCategory() != null && p.getPaidAmount() != null)
+                .filter(p -> p.getSubscriptionCategory() != null)
                 .collect(
                         java.util.stream.Collectors.groupingBy(
                                 PaymentCycleResponse::getSubscriptionCategory,
-                                java.util.stream.Collectors.summingInt(PaymentCycleResponse::getPaidAmount)
+                                java.util.stream.Collectors.summingInt(p ->
+                                        p.getPaidAmount() != null ? p.getPaidAmount() : (p.getSubscriptionAmount() == null ? 0 : p.getSubscriptionAmount())
+                                )
                         )
                 );
 
@@ -105,6 +119,7 @@ public class PaymentHistoryResponse {
                 .startDate(startDate)
                 .endDate(endDate)
                 .totalPaidAmount(totalPaidAmount)
+                .totalMonthlySpending(totalMonthlySpending)
                 .paidCount((int) paidCount)
                 .overdueCount((int) overdueCount)
                 .pendingCount((int) pendingCount)

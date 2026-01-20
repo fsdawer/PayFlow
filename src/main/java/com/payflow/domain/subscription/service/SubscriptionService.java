@@ -11,6 +11,8 @@ public interface SubscriptionService {
 
   List<SubscriptionResponse> getSubscriptions(Long userId);
 
+  SubscriptionResponse findById(Long subscriptionId, Long userId);
+
   SubscriptionResponse updateSubscription(
       Long userId, Long subscriptionId, SubscriptionUpdateRequest request);
 

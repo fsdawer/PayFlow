@@ -64,9 +64,9 @@ const handleClick = (event) => {
 
 /* Primary Button */
 .btn-primary {
-  background: var(--color-gradient-1);
-  color: var(--color-text-primary);
-  box-shadow: var(--shadow-md);
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover:not(:disabled) {

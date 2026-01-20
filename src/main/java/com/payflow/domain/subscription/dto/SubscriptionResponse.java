@@ -1,5 +1,6 @@
 package com.payflow.domain.subscription.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.payflow.domain.subscription.entity.Subscription.CycleType;
 import com.payflow.domain.subscription.entity.Subscription.Status;
 import java.time.LocalDateTime;
@@ -16,7 +17,9 @@ public class SubscriptionResponse {
 
   private Long subscriptionId;
   private Long userId;
+  @JsonProperty("subscriptionsName")
   private String subscriptionsName;
+  @JsonProperty("subscriptionsCategory")
   private String subscriptionsCategory;
   private Integer amount;
   private String currency;
@@ -28,6 +31,8 @@ public class SubscriptionResponse {
   private Boolean reminderD3;
   private Boolean reminderD1;
   private Status status;
+  @JsonProperty("bankName")
+  private String bankName;
   private String memo;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
@@ -49,6 +54,7 @@ public class SubscriptionResponse {
         .reminderD3(subscription.getReminderD3())
         .reminderD1(subscription.getReminderD1())
         .status(subscription.getStatus())
+        .bankName(subscription.getBankName())
         .memo(subscription.getMemo())
         .createdAt(subscription.getCreatedAt())
         .updatedAt(subscription.getUpdatedAt())

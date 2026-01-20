@@ -5,6 +5,7 @@ import com.payflow.domain.payment.dto.PaymentCycleResponse;
 import com.payflow.domain.payment.dto.PaymentHistoryResponse;
 import com.payflow.domain.payment.dto.UpcomingPaymentsResponse;
 import com.payflow.domain.payment.entity.PaymentCycle;
+import com.payflow.domain.payment.repository.PaymentCycleRepository;
 import com.payflow.domain.payment.service.PaymentCycleService;
 import com.payflow.domain.subscription.entity.Subscription;
 import com.payflow.domain.subscription.repository.SubscriptionRepository;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class PaymentCycleController {
 
     private final PaymentCycleService paymentCycleService;
+    private final PaymentCycleRepository paymentCycleRepository;
     private final SubscriptionRepository subscriptionRepository;
 
     /**
@@ -125,17 +127,14 @@ public class PaymentCycleController {
     ) {
         paymentCycleService.markAsPaid(request.getCycleId(), request.getPaidAmount());
         
-        // 업데이트된 정보 반환
-        PaymentCycle cycle = paymentCycleService.getPaymentHistory(
-                null,  // userId 불필요 (cycleId로 직접 조회)
-                LocalDate.now().minusDays(1),
-                LocalDate.now().plusDays(1)
-        ).stream()
-         .filter(c -> c.getCycleId().equals(request.getCycleId()))
-         .findFirst()
-         .orElseThrow();
+        PaymentCycle cycle = paymentCycleRepository.findById(request.getCycleId())
+                .orElseThrow(() -> new IllegalArgumentException("결제 주기를 찾을 수 없습니다: " + request.getCycleId()));
         
-        return ResponseEntity.ok(PaymentCycleResponse.from(cycle));
+        Subscription sub = subscriptionRepository.findById(cycle.getSubscriptionId()).orElse(null);
+        
+        return ResponseEntity.ok(sub != null 
+            ? PaymentCycleResponse.from(cycle, sub) 
+            : PaymentCycleResponse.from(cycle));
     }
 
     /**

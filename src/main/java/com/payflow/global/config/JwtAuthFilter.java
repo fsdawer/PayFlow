@@ -31,9 +31,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     if (authHeader != null && authHeader.startsWith("Bearer ")) {
       String token = authHeader.substring(7);
       if (jwtUtil.isTokenValid(token) && !isBlacklisted(token)) {
-        String email = jwtUtil.getEmail(token);
+        // UserId를 Long으로 추출
+        Long userId = jwtUtil.getUserId(token);
+        // UserId를 principal로 설정
         UsernamePasswordAuthenticationToken authentication =
-            new UsernamePasswordAuthenticationToken(email, null, null);
+            new UsernamePasswordAuthenticationToken(userId, null, null);
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
       }

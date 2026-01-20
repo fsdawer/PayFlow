@@ -61,4 +61,18 @@ public interface PaymentCycleRepository extends JpaRepository<PaymentCycle, Long
      * 구독의 연체된 결제 개수 조회
      */
     long countBySubscriptionIdAndStatus(Long subscriptionId, PaymentStatus status);
+
+    /**
+     * 특정 구독의 특정 기간 내 결제 주기 조회 (중복 방지용)
+     */
+    List<PaymentCycle> findBySubscriptionIdAndDueDateBetween(
+        Long subscriptionId, 
+        LocalDate startDate, 
+        LocalDate endDate
+    );
+
+    /**
+     * 구독 삭제 전 결제 주기 정리
+     */
+    void deleteBySubscriptionId(Long subscriptionId);
 }

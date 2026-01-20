@@ -70,6 +70,9 @@ public class Subscription {
   @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'ACTIVE'")
   private Status status;
 
+  @Column(name = "bank_name", length = 50)
+  private String bankName;  // 은행/카드사 이름
+
   @Column(length = 255)
   private String memo;
 
@@ -146,6 +149,9 @@ public class Subscription {
     }
     if (request.getStatus() != null) {
       this.status = request.getStatus();
+    }
+    if (request.getBankName() != null) {
+      this.bankName = request.getBankName();
     }
     if (request.getMemo() != null) {
       this.memo = request.getMemo();

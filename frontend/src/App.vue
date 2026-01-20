@@ -31,11 +31,10 @@ const isAuthPage = computed(() => {
 
 .main-content {
   flex: 1;
-  padding-top: 80px; /* NavBar height */
+  padding-top: var(--navbar-height);
 }
 
 .main-content.auth-page {
   padding-top: 0;
 }
 </style>
-

@@ -4,110 +4,93 @@ import com.payflow.domain.subscription.dto.SubscriptionCreateRequest;
 import com.payflow.domain.subscription.dto.SubscriptionResponse;
 import com.payflow.domain.subscription.dto.SubscriptionUpdateRequest;
 import com.payflow.domain.subscription.service.SubscriptionService;
-import com.payflow.domain.user.entity.User;
-import com.payflow.domain.user.repository.UserRepository;
+import com.payflow.global.redis.RedisService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * 구독 관리 API Controller
- * @AuthenticationPrincipal을 통해 인증된 사용자 정보를 주입받아 처리
- */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/subscriptions")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class SubscriptionController {
 
-  private final SubscriptionService subscriptionService;
-  private final UserRepository userRepository;
+    private final SubscriptionService subscriptionService;
+    private final RedisService redisService;
 
-
-  /**
-   * 구독 정보 등록
-   * @param email JWT 토큰에서 추출한 사용자 이메일
-   * @param request 구독 생성 요청 정보
-   * @return 생성된 구독 정보
-   */
-  @PostMapping
-  public ResponseEntity<SubscriptionResponse> createSubscription(
-      @AuthenticationPrincipal String email,
-      @Valid @RequestBody SubscriptionCreateRequest request) {
-    
-    Long userId = getUserIdByEmail(email);
-    SubscriptionResponse response = subscriptionService.createSubscription(userId, request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
-  }
-
-
-  /**
-   * 내 구독 정보 전체 조회
-   * @param email JWT 토큰에서 추출한 사용자 이메일
-   * @return 구독 목록
-   */
-  @GetMapping
-  public ResponseEntity<List<SubscriptionResponse>> getSubscriptions(
-      @AuthenticationPrincipal String email) {
-    
-    Long userId = getUserIdByEmail(email);
-    List<SubscriptionResponse> responses = subscriptionService.getSubscriptions(userId);
-    return ResponseEntity.ok(responses);
-  }
-
-
-  /**
-   * 구독 정보 수정
-   * @param email JWT 토큰에서 추출한 사용자 이메일
-   * @param subscriptionId 수정할 구독 ID
-   * @param request 수정 요청 정보
-   * @return 수정된 구독 정보
-   */
-  @PatchMapping("/{subscriptionId}")
-  public ResponseEntity<SubscriptionResponse> updateSubscription(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long subscriptionId,
-      @Valid @RequestBody SubscriptionUpdateRequest request) {
-    
-    Long userId = getUserIdByEmail(email);
-    SubscriptionResponse response = subscriptionService.updateSubscription(userId, subscriptionId, request);
-    return ResponseEntity.ok(response);
-  }
-
-
-  /**
-   * 구독 정보 삭제
-   * @param email JWT 토큰에서 추출한 사용자 이메일
-   * @param subscriptionId 삭제할 구독 ID
-   * @return 204 No Content
-   */
-  @DeleteMapping("/{subscriptionId}")
-  public ResponseEntity<Void> deleteSubscription(
-      @AuthenticationPrincipal String email,
-      @PathVariable Long subscriptionId) {
-    
-    Long userId = getUserIdByEmail(email);
-    subscriptionService.deleteSubscription(userId, subscriptionId);
-    return ResponseEntity.noContent().build();
-  }
-
-
-  /**
-   * 이메일로 사용자 ID 조회 (헬퍼 메소드)
-   * @param email 사용자 이메일
-   * @return 사용자 ID
-   */
-  private Long getUserIdByEmail(String email) {
-    if (email == null || email.isBlank()) {
-      throw new IllegalArgumentException("인증 정보가 유효하지 않습니다.");
+    @GetMapping
+    public ResponseEntity<List<SubscriptionResponse>> getAllSubscriptions(
+            @AuthenticationPrincipal Long userId) {
+        List<SubscriptionResponse> subscriptions = subscriptionService.getSubscriptions(userId);
+        return ResponseEntity.ok(subscriptions);
     }
-    
-    User user = userRepository.findByEmail(email.trim())
-        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. email: " + email));
-    
-    return user.getUserId();
-  }
+
+    /**
+     * 최근 조회한 구독 목록 (Redis)
+     */
+    @GetMapping("/recent")
+    public ResponseEntity<List<SubscriptionResponse>> getRecentSubscriptions(
+            @AuthenticationPrincipal Long userId) {
+        
+        List<Object> recentIds = redisService.getRecentSubscriptions(userId);
+        
+        if (recentIds == null || recentIds.isEmpty()) {
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+
+        // Redis에서 가져온 ID로 구독 조회
+        List<SubscriptionResponse> recent = recentIds.stream()
+                .map(id -> {
+                    try {
+                        Long subscriptionId = Long.valueOf(id.toString());
+                        return subscriptionService.findById(subscriptionId, userId);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                })
+                .filter(sub -> sub != null)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(recent);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SubscriptionResponse> getSubscription(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long userId) {
+        SubscriptionResponse subscription = subscriptionService.findById(id, userId);
+        return ResponseEntity.ok(subscription);
+    }
+
+    @PostMapping
+    public ResponseEntity<SubscriptionResponse> createSubscription(
+            @Valid @RequestBody SubscriptionCreateRequest request,
+            @AuthenticationPrincipal Long userId) {
+        SubscriptionResponse created = subscriptionService.createSubscription(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<SubscriptionResponse> updateSubscription(
+            @PathVariable Long id,
+            @Valid @RequestBody SubscriptionUpdateRequest request,
+            @AuthenticationPrincipal Long userId) {
+        SubscriptionResponse updated = subscriptionService.updateSubscription(userId, id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteSubscription(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long userId) {
+        subscriptionService.deleteSubscription(userId, id);
+        return ResponseEntity.noContent().build();
+    }
 }

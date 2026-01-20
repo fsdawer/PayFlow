@@ -9,21 +9,28 @@
         
         <!-- Desktop Navigation -->
         <div class="navbar-menu">
-          <router-link to="/" class="nav-link">홈</router-link>
-          <router-link to="/subscriptions" class="nav-link">내 구독</router-link>
-          <a href="#features" class="nav-link">기능</a>
-          <a href="#ai" class="nav-link">AI 분석</a>
-          <a href="#pricing" class="nav-link">요금</a>
+          <template v-if="isLoggedIn">
+            <router-link to="/subscriptions" class="nav-link">구독 관리</router-link>
+            <router-link to="/payments" class="nav-link">결제 관리</router-link>
+          </template>
+          <template v-else>
+            <router-link to="/" class="nav-link">홈</router-link>
+          </template>
         </div>
         
         <!-- Auth Buttons -->
         <div class="navbar-actions">
-          <router-link to="/login">
-            <Button variant="ghost">로그인</Button>
-          </router-link>
-          <router-link to="/signup">
-            <Button variant="primary">무료 시작하기</Button>
-          </router-link>
+          <template v-if="isLoggedIn">
+            <button class="nav-btn" @click="logout">로그아웃</button>
+          </template>
+          <template v-else>
+            <router-link to="/login">
+              <Button variant="ghost">로그인</Button>
+            </router-link>
+            <router-link to="/signup">
+              <Button variant="primary">무료 시작하기</Button>
+            </router-link>
+          </template>
         </div>
         
         <!-- Mobile Menu Button -->
@@ -35,17 +42,22 @@
       <!-- Mobile Menu -->
       <div v-if="isMobileMenuOpen" class="mobile-menu">
         <router-link to="/" class="mobile-link" @click="closeMobileMenu">홈</router-link>
-        <router-link to="/subscriptions" class="mobile-link" @click="closeMobileMenu">내 구독</router-link>
+        <router-link to="/subscriptions" class="mobile-link" @click="closeMobileMenu">구독 관리</router-link>
+        <router-link to="/payments" class="mobile-link" @click="closeMobileMenu">결제 관리</router-link>
         <a href="#features" class="mobile-link" @click="closeMobileMenu">기능</a>
         <a href="#ai" class="mobile-link" @click="closeMobileMenu">AI 분석</a>
-        <a href="#pricing" class="mobile-link" @click="closeMobileMenu">요금</a>
         <div class="mobile-actions">
-          <router-link to="/login" @click="closeMobileMenu">
-            <Button variant="outline" block>로그인</Button>
-          </router-link>
-          <router-link to="/signup" @click="closeMobileMenu">
-            <Button variant="primary" block>무료 시작하기</Button>
-          </router-link>
+          <template v-if="isLoggedIn">
+            <Button variant="ghost" block @click="logout">로그아웃</Button>
+          </template>
+          <template v-else>
+            <router-link to="/login" @click="closeMobileMenu">
+              <Button variant="outline" block>로그인</Button>
+            </router-link>
+            <router-link to="/signup" @click="closeMobileMenu">
+              <Button variant="primary" block>무료 시작하기</Button>
+            </router-link>
+          </template>
         </div>
       </div>
     </div>
@@ -53,11 +65,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import Button from './Button.vue'
 
+const router = useRouter()
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
+const isLoggedIn = ref(false)
+
+// 로그인 상태 확인 함수
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+  isLoggedIn.value = !!token
+  console.log('🔍 NavBar 로그인 상태 체크:', { token: token ? '있음' : '없음', isLoggedIn: isLoggedIn.value })
+}
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 20
@@ -71,12 +93,42 @@ const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
 
+const logout = () => {
+  localStorage.removeItem('token')
+  sessionStorage.removeItem('token')
+  isLoggedIn.value = false
+  router.push('/login')
+  closeMobileMenu()
+}
+
+// isLoggedIn 변경 감지
+watch(isLoggedIn, (newVal) => {
+  console.log('👀 isLoggedIn 변경됨:', newVal)
+})
+
+// 페이지 로드 시 및 라우터 변경 시 로그인 상태 확인
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  
+  // 즉시 상태 확인
+  checkLoginStatus()
+  
+  // storage 이벤트 리스너 (다른 탭에서 로그인/로그아웃 시)
+  window.addEventListener('storage', checkLoginStatus)
+  
+  // 라우터 변경 시마다 로그인 상태 재확인
+  router.afterEach(() => {
+    console.log('🔄 라우터 변경 감지')
+    checkLoginStatus()
+  })
+  
+  // 초기 로드 후 한번 더 체크 (안전장치)
+  setTimeout(checkLoginStatus, 100)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('storage', checkLoginStatus)
 })
 </script>
 
@@ -87,18 +139,20 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   z-index: var(--z-fixed);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
   transition: all var(--transition-base);
-  padding: var(--spacing-lg) 0;
+  height: var(--navbar-height);
+  display: flex;
+  align-items: center;
 }
 
 .navbar-scrolled {
-  background: var(--color-bg-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid var(--color-border);
-  padding: var(--spacing-md) 0;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .navbar-content {
@@ -167,6 +221,21 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  padding: 0;
+}
+
+.nav-btn:hover {
+  color: var(--color-text-primary);
 }
 
 .navbar-toggle {

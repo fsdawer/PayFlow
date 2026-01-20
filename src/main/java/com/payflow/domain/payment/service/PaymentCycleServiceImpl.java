@@ -133,11 +133,6 @@ public class PaymentCycleServiceImpl implements PaymentCycleService {
         
         LocalDate dueDate = targetMonth.withDayOfMonth(actualDay);
         
-        // 현재 날짜보다 이전이면 다음 달로
-        if (monthOffset == 0 && dueDate.isBefore(baseDate)) {
-            return calculateMonthlyDueDate(baseDate, billingDay, 1);
-        }
-        
         return dueDate;
     }
 

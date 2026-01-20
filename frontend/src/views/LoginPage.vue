@@ -145,20 +145,37 @@ const handleSubmit = async () => {
   isLoading.value = true
 
   try {
-    const data = await request('/api/auth/login', {
+    console.log('🔐 로그인 시도:', { email: formData.email })
+    
+    const data = await request('http://localhost:8080/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({
         email: formData.email,
         password: formData.password
       })
     })
+    
+    console.log('✅ 로그인 응답:', data)
+    
     if (!data?.accessToken) {
+      console.error('❌ 토큰 없음:', data)
       throw new Error('토큰이 응답에 없습니다.')
     }
+    
     const storage = formData.remember ? localStorage : sessionStorage
-    storage.setItem('accessToken', data.accessToken)
-    router.push('/subscriptions')
+    storage.setItem('token', data.accessToken)
+    
+    console.log('💾 토큰 저장 완료:', {
+      storage: formData.remember ? 'localStorage' : 'sessionStorage',
+      token: data.accessToken.substring(0, 20) + '...'
+    })
+    
+    alert('로그인 성공!')
+    
+    // 페이지를 새로고침하여 NavBar 상태 업데이트
+    window.location.href = '/subscriptions'
   } catch (error) {
+    console.error('❌ 로그인 실패:', error)
     alert(error.message || '로그인에 실패했습니다.')
   } finally {
     isLoading.value = false
@@ -293,7 +310,7 @@ const handleSocialLogin = (provider) => {
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--color-border);
+  background: rgba(16, 185, 129, 0.75);
 }
 
 .divider span {

@@ -14,9 +14,9 @@
             AI 분석으로 매달 지출을 줄이세요
           </p>
           <div class="hero-actions">
-            <router-link to="/signup">
+            <router-link :to="isLoggedIn ? '/subscriptions' : '/signup'">
               <Button variant="primary" style="padding: 1.25rem 2.5rem; font-size: 1.125rem;">
-                무료로 시작하기 →
+                {{ isLoggedIn ? '내 구독 관리하기 →' : '무료로 시작하기 →' }}
               </Button>
             </router-link>
             <a href="#features">
@@ -112,9 +112,9 @@
                 <span>월별 지출 트렌드 분석</span>
               </li>
             </ul>
-            <router-link to="/signup">
+            <router-link :to="isLoggedIn ? '/subscriptions' : '/signup'">
               <Button variant="primary" style="margin-top: 2rem; padding: 1rem 2rem;">
-                AI 분석 시작하기
+                {{ isLoggedIn ? '지금 분석 확인하기' : 'AI 분석 시작하기' }}
               </Button>
             </router-link>
           </div>
@@ -152,9 +152,9 @@
             가입하는 데 1분이면 충분합니다.<br>
             신용카드 없이 무료로 시작할 수 있어요.
           </p>
-          <router-link to="/signup">
+          <router-link :to="isLoggedIn ? '/subscriptions' : '/signup'">
             <Button variant="primary" style="padding: 1.25rem 3rem; font-size: 1.125rem;">
-              무료 시작하기
+              {{ isLoggedIn ? '내 구독 보러가기' : '무료 시작하기' }}
             </Button>
           </router-link>
         </div>
@@ -164,7 +164,15 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import Button from '../components/Button.vue'
+
+const isLoggedIn = ref(false)
+
+onMounted(() => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token')
+  isLoggedIn.value = !!token
+})
 </script>
 
 <style scoped>

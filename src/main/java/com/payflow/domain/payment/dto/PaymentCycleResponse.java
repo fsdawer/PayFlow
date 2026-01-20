@@ -31,6 +31,7 @@ public class PaymentCycleResponse {
     private String subscriptionName;      // 구독 서비스명
     private Integer subscriptionAmount;   // 구독 금액
     private String subscriptionCategory;  // 구독 카테고리
+    private String subscriptionBankName;  // 결제 수단 (은행/카드)
 
     /**
      * Entity → DTO 변환 (기본)
@@ -67,6 +68,7 @@ public class PaymentCycleResponse {
                 .subscriptionName(subscription.getSubscriptionsName())
                 .subscriptionAmount(subscription.getAmount())
                 .subscriptionCategory(subscription.getSubscriptionsCategory())
+                .subscriptionBankName(subscription.getBankName())
                 .build();
     }
 }

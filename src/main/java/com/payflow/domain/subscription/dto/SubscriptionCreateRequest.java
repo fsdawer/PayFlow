@@ -1,5 +1,7 @@
 package com.payflow.domain.subscription.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.payflow.domain.subscription.entity.Subscription.CycleType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -40,6 +42,11 @@ public class SubscriptionCreateRequest {
   // 알림 설정
   private Boolean reminderD3;      // 기본값: true
   private Boolean reminderD1;      // 기본값: true
+
+  // 은행/카드사
+  @JsonProperty("bankName")
+  @JsonAlias("bank_name")
+  private String bankName;
 
   // 메모
   private String memo;
