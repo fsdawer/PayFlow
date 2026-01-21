@@ -11,7 +11,6 @@
 [![Java](https://img.shields.io/badge/Java-17-red.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green.svg)](https://spring.io/projects/spring-boot)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-blue.svg)](https://vuejs.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 </div>
 
@@ -338,12 +337,6 @@ http://localhost:5173
 ## 🤝 기여하기
 
 Pull Request는 언제나 환영합니다! 버그 리포트나 기능 제안은 Issues를 이용해주세요.
-
----
-
-## 📝 라이선스
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
